@@ -51,10 +51,3 @@ Ce projet vise à optimiser les trajets des équipes de déneigement de la ville
 - **GraphEulirizer** : Eulérise le graphe pour garantir qu'il contient un circuit eulérien.
 - **GraphSegmenter** : Segmente le graphe en sous-graphes par quartiers.
 
-## Contribuer
-
-Les contributions sont les bienvenues. Veuillez soumettre des pull requests pour tout changement majeur afin que nous puissions en discuter d'abord.
-
-## Licence
-
-Ce projet est sous licence MIT.
