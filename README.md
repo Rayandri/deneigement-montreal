@@ -12,8 +12,9 @@ Ce projet vise à optimiser les trajets des équipes de déneigement de la ville
 
 1. Clonez le dépôt :
    ```bash
-   git clone <url-du-repo>
-   cd <nom-du-repo>
+   git clone https://github.com/Rayandri/deneigement-montreal
+   cd deneigement-montreal
+
    ```
 
 2. Créez un environnement virtuel :
