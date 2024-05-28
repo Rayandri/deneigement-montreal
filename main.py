@@ -1,75 +1,82 @@
 import os
 import osmnx as ox
 import networkx as nx
+import numpy as np
 
-class GraphDownloader:
-    def __init__(self, city_name):
+class GraphManager:
+    """Class to manage downloading and loading the graph."""
+    
+    def __init__(self, city_name, file_path):
         self.city_name = city_name
-
-    def download_graph(self, network_type='drive'):
-        self.graph = ox.graph_from_place(self.city_name, network_type=network_type)
+        self.file_path = file_path
+        self.graph = None
+    
+    def load_or_download_graph(self):
+        """Load the graph from file if it exists, otherwise download it."""
+        if os.path.exists(self.file_path):
+            self.graph = ox.load_graphml(self.file_path)
+        else:
+            self.graph = ox.graph_from_place(self.city_name, network_type='drive')
+            ox.save_graphml(self.graph, self.file_path)
         return self.graph
-
-    def save_graph(self, file_path):
-        ox.save_graphml(self.graph, file_path)
-
-
-class GraphHandler:
-    def __init__(self, file_path):
-        self.graph = ox.load_graphml(file_path)
     
     def get_graph_info(self):
+        """Return basic information about the graph."""
         return nx.info(self.graph)
+
+
+class GraphEulirizer:
+    """Class to eulerize the graph."""
     
-    def find_shortest_path(self, origin, destination):
-        origin_node = ox.distance.nearest_nodes(self.graph, X=origin[1], Y=origin[0])
-        destination_node = ox.distance.nearest_nodes(self.graph, X=destination[1], Y=destination[0])
-        return nx.shortest_path(self.graph, origin_node, destination_node, weight='length')
+    def __init__(self, graph):
+        self.graph = graph
+    
+    def eulerize_graph(self):
+        """Convert the graph into an Eulerian graph."""
+        # Placeholder for Eulerian path creation
+        # Implementation would involve making the graph Eulerian
+        eulerized_graph = nx.eulerize(self.graph)
+        return eulerized_graph
 
 
-class PathOptimizer:
-    def __init__(self, graph_handler):
-        self.graph = graph_handler.graph
-
-    def optimize_drone_path(self):
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """
-        return list(self.graph.nodes)
-
-    def optimize_snow_removal_path(self, identified_areas):
-        """_summary_
-
-        Args:
-            identified_areas (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        return identified_areas
+class GraphSegmenter:
+    """Class to segment the graph by neighborhoods."""
+    
+    def __init__(self, graph):
+        self.graph = graph
+    
+    def segment_by_neighborhood(self, neighborhoods):
+        """Segment the graph into subgraphs based on neighborhoods."""
+        subgraphs = {}
+        for name, bbox in neighborhoods.items():
+            nodes = ox.graph_from_bbox(bbox['north'], bbox['south'], bbox['east'], bbox['west'], network_type='drive').nodes
+            subgraphs[name] = self.graph.subgraph(nodes)
+        return subgraphs
 
 
 def main():
     city_name = "Montréal, Québec, Canada"
     graph_file = "montreal_graph.graphml"
+    
+    manager = GraphManager(city_name, graph_file)
+    graph = manager.load_or_download_graph()
+    print(manager.get_graph_info())
+    
+    eulirizer = GraphEulirizer(graph)
+    eulerized_graph = eulirizer.eulerize_graph()
+    
+    neighborhoods = {
+        "Outremont": {"north": 45.520, "south": 45.510, "east": -73.590, "west": -73.610},
+        "Verdun": {"north": 45.470, "south": 45.450, "east": -73.560, "west": -73.600},
+    }
+    
+    segmenter = GraphSegmenter(graph)
+    subgraphs = segmenter.segment_by_neighborhood(neighborhoods)
+    
+    for name, subgraph in subgraphs.items():
+        print(f"Neighborhood: {name}")
+        print(nx.info(subgraph))
 
-    if not os.path.exists(graph_file):
-        downloader = GraphDownloader(city_name)
-        graph = downloader.download_graph()
-        downloader.save_graph(graph_file)
-
-    handler = GraphHandler(graph_file)
-    print(handler.get_graph_info())
-
-    optimizer = PathOptimizer(handler)
-    drone_path = optimizer.optimize_drone_path()
-    print("Drone path:", drone_path)
-
-    identified_areas = list(handler.graph.nodes)[:10]
-    snow_removal_path = optimizer.optimize_snow_removal_path(identified_areas)
-    print("Snow removal path:", snow_removal_path)
 
 if __name__ == "__main__":
     main()
