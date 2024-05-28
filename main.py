@@ -22,7 +22,7 @@ class GraphManager:
     
     def get_graph_info(self):
         """Return basic information about the graph."""
-        return nx.info(self.graph)
+        return nx.classes.function.info(self.graph)
 
 
 class GraphEulirizer:
@@ -62,20 +62,6 @@ def main():
     graph = manager.load_or_download_graph()
     print(manager.get_graph_info())
     
-    eulirizer = GraphEulirizer(graph)
-    eulerized_graph = eulirizer.eulerize_graph()
-    
-    neighborhoods = {
-        "Outremont": {"north": 45.520, "south": 45.510, "east": -73.590, "west": -73.610},
-        "Verdun": {"north": 45.470, "south": 45.450, "east": -73.560, "west": -73.600},
-    }
-    
-    segmenter = GraphSegmenter(graph)
-    subgraphs = segmenter.segment_by_neighborhood(neighborhoods)
-    
-    for name, subgraph in subgraphs.items():
-        print(f"Neighborhood: {name}")
-        print(nx.info(subgraph))
 
 
 if __name__ == "__main__":
