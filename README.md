@@ -22,17 +22,21 @@ Pour installer toutes les dépendances nécessaires et configurer l'environnemen
 
 2. **Créez et activez un environnement virtuel, et installez les dépendances** :
     - Assurez-vous que le fichier `requirements.txt` est présent dans le répertoire cloné.
-    - Créez et exécutez le script d'installation :
+    - Exécutez le script d'installation :
 
     ```bash
-    # Créez un fichier install_dependencies.sh et copiez-y le contenu suivant
+    ./install.sh
+    ```
+
+    - Contenu de `install.sh` :
+    ```bash
     #!/bin/bash
 
     # Définir le nom de l'environnement virtuel
     VENV_DIR="venv"
 
     # Vérifier si l'environnement virtuel existe, sinon le créer
-    if [ ! -d "$VENV_DIR" ]; then
+    if [ ! -d "$VENV_DIR" ]; alors
         echo "Création de l'environnement virtuel..."
         python3 -m venv $VENV_DIR
         echo "Environnement virtuel créé."
@@ -51,13 +55,6 @@ Pour installer toutes les dépendances nécessaires et configurer l'environnemen
     pip install 'pyconcorde @ git+https://github.com/jvkersch/pyconcorde'
 
     echo "Installation terminée."
-    ```
-
-    - Rendez le script exécutable et exécutez-le :
-
-    ```bash
-    chmod +x install_dependencies.sh
-    ./install_dependencies.sh
     ```
 
 ## Utilisation
