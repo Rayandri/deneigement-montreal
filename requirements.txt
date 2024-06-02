@@ -1,2 +1,5 @@
-osmnx==1.1.2
-networkx==2.6.3
+osmnx
+networkx
+numpy
+python-tsp
+vrpy
