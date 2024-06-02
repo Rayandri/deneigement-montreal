@@ -21,19 +21,32 @@ Pour installer toutes les dépendances nécessaires et configurer l'environnemen
     ```
 
 2. **Créez et activez un environnement virtuel, et installez les dépendances** :
-    - Assurez-vous que le fichier `requirements.txt` est présent dans le répertoire cloné.
-    - Exécutez le script d'installation :
-
     ```bash
     ./install.sh
     ```
+
+    ou bien manuellement :
+
+   pour crée un environnement virtuel :
+   ```bash
+      python3 -m venv env
+      source env/bin/activate
+   ```
+
+
+    ```bash
+    pip install -r requirements.txt
+    pip install 'pyconcorde @ git+https://github.com/jvkersch/pyconcorde'
+    ```
+
+
 
 
 ## Utilisation
 Le script principal se trouve dans `main.py`. Pour exécuter le script, utilisez la commande suivante :
 
 ```bash
-source venv/bin/activate
+source env/bin/activate
 python main.py
 ```
 
