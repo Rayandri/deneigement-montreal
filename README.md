@@ -56,6 +56,3 @@ python main.py
 - `optimize_drone_path`: Optimise le trajet du drone en utilisant le Concorde TSP Solver.
 - `create_vrp_graph`: Crée un graphe VRP pour les nœuds nécessitant un déneigement.
 - `solve_vrp`: Résout le VRP en utilisant OR-Tools.
-
-## Contributions
-Les contributions sont les bienvenues ! Veuillez soumettre une pull request ou ouvrir une issue pour toute suggestion ou amélioration.
