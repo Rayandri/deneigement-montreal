@@ -1,54 +1,79 @@
 
-# Optimisation des trajets de déneigement pour la ville de Montréal
+# Deneigement Montreal
 
-Ce projet vise à optimiser les trajets des équipes de déneigement de la ville de Montréal en utilisant les données d'OpenStreetMap et des algorithmes de parcours de graphes.
+## Description
+Ce projet vise à optimiser les trajets des opérations de déneigement de la ville de Montréal. Il utilise des algorithmes avancés pour résoudre les problèmes de TSP (Travelling Salesman Problem) et de VRP (Vehicle Routing Problem) afin de minimiser les coûts et d'améliorer l'efficacité des opérations de déneigement.
 
-## Prérequis
-
-- Python 3.7 ou supérieur
-- `virtualenv` pour créer un environnement virtuel
+## Algorithmes Utilisés
+1. **Concorde TSP Solver** : Utilisé pour résoudre le problème TSP avec une efficacité optimale. Concorde est l'un des solveurs TSP les plus rapides et les plus précis disponibles.
+   
+2. **OR-Tools pour VRP** : Utilisé pour résoudre le problème de routage des véhicules. OR-Tools est une suite d'optimisation de Google, connue pour ses performances élevées et sa capacité à traiter de grands ensembles de données rapidement et efficacement.
 
 ## Installation
+Pour installer toutes les dépendances nécessaires et configurer l'environnement, suivez les étapes ci-dessous.
 
-1. Clonez le dépôt :
-   ```bash
-   git clone https://github.com/Rayandri/deneigement-montreal
-   cd deneigement-montreal
+### Étapes d'Installation
 
-   ```
+1. **Clonez le dépôt** :
+    ```bash
+    git clone https://github.com/Rayandri/deneigement-montreal.git
+    cd deneigement-montreal
+    ```
 
-2. Créez un environnement virtuel :
-   ```bash
-   python3 -m venv env
-   source env/bin/activate   # Sur Windows utilisez `env\Scripts\activate`
-   ```
+2. **Créez et activez un environnement virtuel, et installez les dépendances** :
+    - Assurez-vous que le fichier `requirements.txt` est présent dans le répertoire cloné.
+    - Créez et exécutez le script d'installation :
 
-3. Installez les dépendances :
-   ```bash
-   pip install -r requirements.txt
-   ```
+    ```bash
+    # Créez un fichier install_dependencies.sh et copiez-y le contenu suivant
+    #!/bin/bash
+
+    # Définir le nom de l'environnement virtuel
+    VENV_DIR="venv"
+
+    # Vérifier si l'environnement virtuel existe, sinon le créer
+    if [ ! -d "$VENV_DIR" ]; then
+        echo "Création de l'environnement virtuel..."
+        python3 -m venv $VENV_DIR
+        echo "Environnement virtuel créé."
+    fi
+
+    # Activer l'environnement virtuel
+    source $VENV_DIR/bin/activate
+
+    # Mettre à jour pip
+    pip install --upgrade pip
+
+    # Installer les dépendances à partir de requirements.txt
+    pip install -r requirements.txt
+
+    # Installer pyconcorde depuis GitHub
+    pip install 'pyconcorde @ git+https://github.com/jvkersch/pyconcorde'
+
+    echo "Installation terminée."
+    ```
+
+    - Rendez le script exécutable et exécutez-le :
+
+    ```bash
+    chmod +x install_dependencies.sh
+    ./install_dependencies.sh
+    ```
 
 ## Utilisation
+Le script principal se trouve dans `main.py`. Pour exécuter le script, utilisez la commande suivante :
 
-1. Assurez-vous que l'environnement virtuel est activé :
-   ```bash
-   source env/bin/activate   # Sur Windows utilisez `env\Scripts\activate`
-   ```
+```bash
+source venv/bin/activate
+python main.py
+```
 
-2. Exécutez le script principal :
-   ```bash
-   python main.py
-   ```
+## Structure du Code
+- `GraphManager`: Gère le téléchargement et le chargement du graphe de la ville.
+- `create_distance_matrix`: Crée une matrice de distances à partir du graphe.
+- `optimize_drone_path`: Optimise le trajet du drone en utilisant le Concorde TSP Solver.
+- `create_vrp_graph`: Crée un graphe VRP pour les nœuds nécessitant un déneigement.
+- `solve_vrp`: Résout le VRP en utilisant OR-Tools.
 
-## Structure du projet
-
-- `main.py` : Script principal pour télécharger, eulériser et segmenter le graphe de Montréal.
-- `requirements.txt` : Fichier listant les dépendances nécessaires.
-- `README.md` : Ce fichier d'explication.
-
-## Fonctionnalités
-
-- **GraphManager** : Télécharge ou charge le graphe de Montréal.
-- **GraphEulirizer** : Eulérise le graphe pour garantir qu'il contient un circuit eulérien.
-- **GraphSegmenter** : Segmente le graphe en sous-graphes par quartiers.
-
+## Contributions
+Les contributions sont les bienvenues ! Veuillez soumettre une pull request ou ouvrir une issue pour toute suggestion ou amélioration.
