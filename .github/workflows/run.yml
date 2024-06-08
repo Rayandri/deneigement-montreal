@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # Remplacez par la version de Python que vous utilisez
+
+    - name: Run install.sh
+      run: |
+        chmod +x install.sh
+        ./install.sh
+
+    - name: Run main.py
+      run: |
+        source env/bin/activate
+        python main.py
