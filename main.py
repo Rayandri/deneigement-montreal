@@ -8,9 +8,11 @@ from ortools.constraint_solver import pywrapcp
 from concorde.tsp import TSPSolver
 from colorama import Fore, Style, init
 import contextlib
+import sys
 
 # Initialiser colorama
 init()
+
 
 class GraphManager:
     """Classe pour gérer le téléchargement, le chargement, l'eulérisation et l'optimisation des trajets dans un graphe urbain."""
@@ -38,7 +40,8 @@ class GraphManager:
             self.graph = ox.load_graphml(self.file_path)
         else:
             print("Téléchargement du graphe de Montréal...")
-            self.graph = ox.graph_from_place(self.city_name, network_type='drive')
+            self.graph = ox.graph_from_place(
+                self.city_name, network_type='drive')
             ox.save_graphml(self.graph, self.file_path)
         return self.graph
 
@@ -62,7 +65,8 @@ class GraphManager:
         if os.path.exists(quartier_file_path):
             self.quartier = ox.load_graphml(quartier_file_path)
         else:
-            self.quartier = ox.graph_from_place(quartiers[i], network_type='drive')
+            self.quartier = ox.graph_from_place(
+                quartiers[i], network_type='drive')
             ox.save_graphml(self.quartier, quartier_file_path)
         return self.quartier
 
@@ -91,9 +95,11 @@ class GraphManager:
         """
         undirected_graph = graph.to_undirected()
         if not nx.is_eulerian(undirected_graph):
-            odd_degree_nodes = [node for node, degree in undirected_graph.degree() if degree % 2 == 1]
+            odd_degree_nodes = [
+                node for node, degree in undirected_graph.degree() if degree % 2 == 1]
             for i in range(0, len(odd_degree_nodes), 2):
-                undirected_graph.add_edge(odd_degree_nodes[i], odd_degree_nodes[i+1], length=0)
+                undirected_graph.add_edge(
+                    odd_degree_nodes[i], odd_degree_nodes[i+1], length=0)
         return undirected_graph
 
     def solve_chinese_postman(self, graph):
@@ -104,7 +110,8 @@ class GraphManager:
         :return: Le circuit optimal et sa longueur.
         """
         eulerized_graph = self.eulerize_graph(graph)
-        eulerian_circuit = list(nx.eulerian_circuit(eulerized_graph, source=list(eulerized_graph.nodes())[0]))
+        eulerian_circuit = list(nx.eulerian_circuit(
+            eulerized_graph, source=list(eulerized_graph.nodes())[0]))
         circuit = []
         total_distance = 0
         for u, v in eulerian_circuit:
@@ -112,6 +119,7 @@ class GraphManager:
             total_distance += eulerized_graph[u][v][0]['length']
         circuit.append(circuit[0])  # Retourner au point de départ
         return circuit, total_distance
+
 
 def create_distance_matrix(graph):
     """
@@ -127,10 +135,12 @@ def create_distance_matrix(graph):
         for j, node_j in enumerate(nodes):
             if i != j:
                 try:
-                    distance_matrix[i, j] = nx.shortest_path_length(graph, node_i, node_j, weight='length')
+                    distance_matrix[i, j] = nx.shortest_path_length(
+                        graph, node_i, node_j, weight='length')
                 except nx.NetworkXNoPath:
                     distance_matrix[i, j] = np.inf
     return nodes, distance_matrix
+
 
 def optimize_drone_path(distance_matrix, nodes):
     """
@@ -140,71 +150,97 @@ def optimize_drone_path(distance_matrix, nodes):
     :param nodes: Liste des nœuds.
     :return: Le chemin optimisé et la distance totale.
     """
-    with open(os.devnull, 'w') as fnull:
-        with contextlib.redirect_stdout(fnull), contextlib.redirect_stderr(fnull):
-            solver = TSPSolver.from_data(distance_matrix, norm="GEO", ys=nodes)
-            solution = solver.solve()
+    # Sauvegarder les sorties standard et d'erreur actuelles
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+
+    try:
+        # Rediriger les sorties standard et d'erreur vers /dev/null
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w')
+
+        solver = TSPSolver.from_data(distance_matrix, norm="GEO", ys=nodes)
+        solution = solver.solve()
+    finally:
+        # Restaurer les sorties standard et d'erreur originales
+        sys.stdout.close()
+        sys.stderr.close()
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+
     drone_path = [nodes[i] for i in solution.tour]
     return drone_path, solution.optimal_value
 
+
+# Example usage in the main function
 def main():
     city_name = 'Montreal, Quebec, Canada'
     file_path = os.path.join('graph', 'montreal.graphml')
-    
+
     # Charger le graphe de la ville
     manager = GraphManager(city_name, file_path)
-    #graph = manager.load_or_download_graph()
-    
+
     quartiers = ["Outremont, Montreal, Canada", "Verdun, Montreal, Canada", "Anjou, Montreal, Canada",
                  "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada", "Le Plateau-Mont-Royal, Montreal, Canada"]
-    
+
     results = []
-    
+
     for i, quartier in enumerate(quartiers):
         quartier_results = {"quartier": quartier}
-        
+
         # Charger le graphe du quartier
-        
         graph_quartier = manager.get_graph_district(i)
-        
+
         # Optimiser le trajet du drone (Problème 1)
-        nodes_quartier, distance_matrix_quartier = create_distance_matrix(graph_quartier)
-        drone_path_quartier, distance_quartier = optimize_drone_path(distance_matrix_quartier, nodes_quartier)
+        nodes_quartier, distance_matrix_quartier = create_distance_matrix(
+            graph_quartier)
+        drone_path_quartier, distance_quartier = optimize_drone_path(
+            distance_matrix_quartier, nodes_quartier)
         quartier_results["drone_path"] = drone_path_quartier
         quartier_results["drone_distance"] = distance_quartier
-        
+
         # Identifier les zones nécessitant un déneigement
         snow_removal_nodes_quartier = drone_path_quartier
-        
+
         # Résoudre le problème du postier chinois (Problème 2)
-        postman_path_quartier, postman_distance_quartier = manager.solve_chinese_postman(graph_quartier)
+        postman_path_quartier, postman_distance_quartier = manager.solve_chinese_postman(
+            graph_quartier)
         quartier_results["postman_path"] = postman_path_quartier
         quartier_results["postman_distance"] = postman_distance_quartier
-        
+
         # Modèle de coût (Problème 3)
         drone_cost = 100 + 0.01 * distance_quartier
         vehicle_cost_type_I = 500 + 1.1 * postman_distance_quartier
         vehicle_cost_type_II = 800 + 1.3 * postman_distance_quartier
-        
+
         quartier_results["drone_cost"] = drone_cost
         quartier_results["vehicle_cost_type_I"] = vehicle_cost_type_I
         quartier_results["vehicle_cost_type_II"] = vehicle_cost_type_II
-        
+
         results.append(quartier_results)
-    
+
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
     for result in results:
-        print(Fore.YELLOW + f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
-        print(Fore.GREEN + f"Chemin du drone : {result['drone_path']}" + Style.RESET_ALL)
-        print(Fore.GREEN + f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
-        print(Fore.MAGENTA + f"Chemin du postier chinois : {result['postman_path']}" + Style.RESET_ALL)
-        print(Fore.MAGENTA + f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
-        print(Fore.BLUE + f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
-        print(Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
-        print(Fore.RED + f"Coût des opérations de déneigement avec véhicules type II : {result['vehicle_cost_type_II']:.2f} €" + Style.RESET_ALL)
-    
+        print(Fore.YELLOW +
+              f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
+        print(Fore.GREEN +
+              f"Chemin du drone : {result['drone_path']}" + Style.RESET_ALL)
+        print(
+            Fore.GREEN + f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
+        print(Fore.MAGENTA +
+              f"Chemin du postier chinois : {result['postman_path']}" + Style.RESET_ALL)
+        print(Fore.MAGENTA +
+              f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
+        print(
+            Fore.BLUE + f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
+        print(
+            Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
+        print(
+            Fore.RED + f"Coût des opérations de déneigement avec véhicules type II : {result['vehicle_cost_type_II']:.2f} €" + Style.RESET_ALL)
+
     print(Fore.CYAN + "\nOptimisation des trajets de déneigement terminée pour tous les quartiers." + Style.RESET_ALL)
+
 
 if __name__ == "__main__":
     main()
