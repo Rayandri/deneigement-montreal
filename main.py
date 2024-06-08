@@ -20,6 +20,7 @@ class GraphManager:
         self.city_name = city_name
         self.file_path = file_path
         self.graph = None
+        self.quartier = None
 
     def load_or_download_graph(self):
         """
@@ -28,13 +29,34 @@ class GraphManager:
         :return: Le graphe de la ville.
         """
         if os.path.exists(self.file_path):
-            print("Chargement du graphe depuis le fichier...")
+            print("Chargement du graphe de Montréal depuis le fichier...")
             self.graph = ox.load_graphml(self.file_path)
         else:
-            print("Téléchargement du graphe...")
+            print("Téléchargement du graphe de Montréal...")
             self.graph = ox.graph_from_place(self.city_name, network_type='drive')
             ox.save_graphml(self.graph, self.file_path)
         return self.graph
+    
+    def get_graph_district(self, i):
+        """
+        Charger le graphe à partir du fichier si disponible, sinon le télécharger.
+
+        :return: Le graphe de la ville.
+        """
+        # Initialiser les quartiers
+        quartiers = [
+            "Outremont, Montreal, Canada",
+            "Verdun, Montreal, Canada",
+            "Anjou, Montreal, Canada",
+            "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada",
+            "Le Plateau-Mont-Royal, Montreal, Canada"
+        ]
+        self.quartier = []
+        # Télécharger et construire le graphe pour chaque quartier
+        print("Téléchargement du graphe " + quartiers[i] + "...")
+        self.quartier = ox.graph_from_place(quartiers[i], network_type='drive')
+        ox.save_graphml(self.quartier, quartiers[i] + ".graphml")
+        return self.quartier
 
     def get_graph_info(self):
         """
@@ -44,6 +66,14 @@ class GraphManager:
         """
         return nx.info(self.graph)
 
+    def get_graph_district_info(self, i):
+        """
+        Retourner les informations de base sur le graphe.
+
+        :return: Informations sur le graphe.
+        """
+        return nx.info(self.quartier[i])
+    
 def create_distance_matrix(graph):
     """
     Créer une matrice de distances à partir d'un graphe.
@@ -71,7 +101,7 @@ def optimize_drone_path(distance_matrix, nodes):
     :param nodes: Liste des nœuds.
     :return: Le chemin optimisé et la distance totale.
     """
-    solver = TSPSolver.from_data(distance_matrix)
+    solver = TSPSolver.from_data(distance_matrix, norm="GEO", ys=nodes)
     solution = solver.solve()
     drone_path = [nodes[i] for i in solution.tour]
     return drone_path, solution.optimal_value
@@ -144,6 +174,26 @@ def main():
 
     # Charger le graphe
     manager = GraphManager(city_name, file_path)
+    
+    # Test avec un quartier
+    graph_quartier = manager.get_graph_district(1)
+    # Créer la matrice de distances
+    nodes_quartier, distance_matrix_quartier = create_distance_matrix(graph_quartier)
+     # Optimiser le trajet du drone
+    drone_path_quartier, distance_quartier = optimize_drone_path(distance_matrix_quartier, nodes_quartier)
+    print("Chemin du drone :", drone_path_quartier)
+    print("Distance totale pour le chemin du drone :", distance_quartier)
+    # Identifier les zones nécessitant un déneigement
+    snow_removal_nodes_quartier = drone_path_quartier
+    # Créer le graphe VRP
+    G_quartier = create_vrp_graph(graph_quartier, snow_removal_nodes_quartier)
+    # Résoudre le VRP
+    best_value_quartier, best_routes_quartier = solve_vrp(G_quartier, load_capacity=10, duration=5)
+    print("Valeur optimale pour le VRP :", best_value_quartier)
+    print("Routes optimisées pour le VRP :", best_routes_quartier)
+    
+    
+    """
     graph = manager.load_or_download_graph()
 
     # Créer la matrice de distances
@@ -164,6 +214,7 @@ def main():
     best_value, best_routes = solve_vrp(G, load_capacity=10, duration=5)
     print("Valeur optimale pour le VRP :", best_value)
     print("Routes optimisées pour le VRP :", best_routes)
+    """
 
 if __name__ == "__main__":
     main()
