@@ -3,4 +3,6 @@ networkx
 numpy
 ortools
 tqdm
+colorama
+
     
