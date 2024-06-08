@@ -203,14 +203,15 @@ def main():
             quartier_results["vehicle_cost_type_II"] = vehicle_cost_type_II
             
         results.append(quartier_results)
+        
     
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
     for result in results:
         print(Fore.YELLOW + f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
-        print(f"Chemin du drone : {result['drone_path']}" + Style.RESET_ALL)
-        print(Fore.MAGENTA + f"Chemin du postier chinois : {result['postman_path']}" + Style.RESET_ALL)
-        print(f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
+        #print(f"Chemin du drone : {result['drone_path']}" + Style.RESET_ALL + "\n")
+        #print(f"Chemin du postier chinois : {result['postman_path']}" + Style.RESET_ALL + "\n")
+        print(Fore.MAGENTA + f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
         print(Fore.MAGENTA + f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
         print(Fore.BLUE + f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
         print(Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
