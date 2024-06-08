@@ -59,32 +59,27 @@ class GraphManager:
             ox.save_graphml(self.graph, self.file_path)
         return self.graph
 
-    def get_graph_district(self, i):
+    def get_graph_district(self, i, quartiers):
         """
         Charger le graphe à partir du fichier si disponible, sinon le télécharger.
 
         :return: Le graphe de la ville.
         """
-        quartiers = [
-            "Outremont, Montreal, Canada",
-            "Verdun, Montreal, Canada",
-            "Anjou, Montreal, Canada",
-            "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada",
-            "Le Plateau-Mont-Royal, Montreal, Canada"
-        ]
+        
+        #on va tous mettre dans le dossier graph
+        if not os.path.exists("graph"):
+            os.mkdir("graph")
+        os.chdir("graph")
         self.quartier = []
-        print("Téléchargement du graphe " + quartiers[i] + "...")
-        self.quartier = ox.graph_from_place(quartiers[i], network_type='drive')
-        ox.save_graphml(self.quartier, quartiers[i] + ".graphml")
-        return self.quartier
         if os.path.exists(self.file_path):
-            print("Chargement du graphe de Montréal depuis le fichier...")
-            self.graph = ox.load_graphml(self.file_path)
+            print("Chargement du graphe " + quartiers[i] + " depuis le fichier...")
+            self.quartier = ox.load_graphml(quartiers[i] + ".graphml")
         else:
-            print("Téléchargement du graphe de Montréal...")
-            self.graph = ox.graph_from_place(self.city_name, network_type='drive')
-            ox.save_graphml(self.graph, self.file_path)
-        return self.graph
+            print("Téléchargement du graphe " + quartiers[i] + "...")
+            self.quartier = ox.graph_from_place(quartiers[i], network_type='drive')
+            ox.save_graphml(self.quartier, quartiers[i] + ".graphml")
+        os.chdir("..")
+        return self.quartier
     
 
     def get_graph_info(self):
@@ -182,7 +177,7 @@ def main():
         quartier_results = {"quartier": quartier}
         
         # Charger le graphe du quartier
-        graph_quartier = manager.get_graph_district(i)
+        graph_quartier = manager.get_graph_district(i, quartiers)
         
         with suppress_output():
             # Optimiser le trajet du drone (Problème 1)
@@ -209,14 +204,15 @@ def main():
             quartier_results["vehicle_cost_type_II"] = vehicle_cost_type_II
             
         results.append(quartier_results)
+        break
     
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
     for result in results:
         print(Fore.YELLOW + f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
-        print(Fore.GREEN + f"Chemin du drone : {result['drone_path']}" + Style.RESET_ALL)
-        print(Fore.GREEN + f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
+        print(f"Chemin du drone : {result['drone_path']}" + Style.RESET_ALL)
         print(Fore.MAGENTA + f"Chemin du postier chinois : {result['postman_path']}" + Style.RESET_ALL)
+        print(f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
         print(Fore.MAGENTA + f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
         print(Fore.BLUE + f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
         print(Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
