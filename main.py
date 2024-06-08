@@ -65,7 +65,6 @@ class GraphManager:
 
         :return: Le graphe de la ville.
         """
-        
         #on va tous mettre dans le dossier graph
         if not os.path.exists("graph"):
             os.mkdir("graph")
