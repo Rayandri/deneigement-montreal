@@ -204,7 +204,6 @@ def main():
             quartier_results["vehicle_cost_type_II"] = vehicle_cost_type_II
             
         results.append(quartier_results)
-        break
     
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
