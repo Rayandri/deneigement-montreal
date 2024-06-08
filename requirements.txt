@@ -1,7 +1,6 @@
 osmnx==1.1.2
 networkx==2.6.3
-numpy==1.21.2
+numpy
 tqdm==4.62.3
-ortools==9.0.9048
-concorde==0.1.3
+ortools
 colorama==0.4.4
