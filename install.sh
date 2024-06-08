@@ -19,7 +19,4 @@ pip install --upgrade pip
 # Installer les dépendances à partir de requirements.txt
 pip install -r requirements.txt
 
-# Installer pyconcorde depuis GitHub
-pip install 'pyconcorde @ git+https://github.com/jvkersch/pyconcorde'
-
 echo "Installation terminée."
