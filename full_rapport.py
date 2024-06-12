@@ -373,7 +373,6 @@ def run(num_vehicles):
         print(
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
         
-        break
     
 
     # Afficher le résumé final
