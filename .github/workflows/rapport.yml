@@ -43,7 +43,7 @@ jobs:
 
     - name: Send output and CSV to Discord
       run: |
-        webhook_url="https://discord.com/api/webhooks/1222208487283626055/wNRotWI9_uyXvhHZ-UQZxQWnHzajZzjAkKF6jQTgwFUNSrpHfHTsejFXYV-c9QXL64i4"
+        webhook_url="https://discord.com/api/webhooks/1250567268442702005/B5ZrWNteOesdLziXEbWM9POWgBvGqa2N8bS_RJYuqhR6sWqcXUNRFKq--ffjFdnKO944"
         tag_name=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
         curl -X POST "$webhook_url" \
           -F "payload_json={\"embeds\":[{\"title\":\"Rapport complet du tag $tag_name\",\"description\":\"Voici le rapport complet pour le tag $tag_name\"}]}" \
