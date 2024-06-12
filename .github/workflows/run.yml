@@ -18,7 +18,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'  
-        
+
     - name: Run install.sh
       run: |
         chmod +x install.sh
@@ -34,3 +34,14 @@ jobs:
       with:
         name: output-file
         path: output.txt
+
+    - name: Download output file
+      uses: actions/download-artifact@v2
+      with:
+        name: output-file
+        path: .
+
+    - name: Send output file to Discord
+      run: |
+        curl -X POST "https://discord.com/api/webhooks/1222208487283626055/wNRotWI9_uyXvhHZ-UQZxQWnHzajZzjAkKF6jQTgwFUNSrpHfHTsejFXYV-c9QXL64i4" \
+        -F "file=@output.txt"
