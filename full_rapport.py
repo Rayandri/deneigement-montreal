@@ -319,8 +319,8 @@ def run(num_vehicles):
                  "Verdun, Montreal, Canada",
                  "Le Plateau-Mont-Royal, Montreal, Canada",
                  "Anjou, Montreal, Canada"
+                 "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada",
                  ]
-                 #"Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada",
 
     results = []
     cpt = 0
