@@ -3,48 +3,66 @@ name: Rapport complet
 on:
   push:
     tags:
-      - 'rapport-*'
+      - "rapport-*"
 
 jobs:
   run:
     runs-on: self-hosted
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
 
-    - name: Run install.sh
-      run: |
-        chmod +x install.sh
-        ./install.sh
+      - name: Run install.sh
+        run: |
+          chmod +x install.sh
+          ./install.sh
 
-    - name: Run full_rapport.py and store output
-      run: |
-        source env/bin/activate
-        python full_rapport.py > output.txt
+      - name: Run full_rapport.py and store output
+        run: |
+          source env/bin/activate
+          python full_rapport.py > output.txt
 
-    - name: Upload output file
-      uses: actions/upload-artifact@v2
-      with:
-        name: output-file
-        path: output.txt
+      - name: Check if animations folder exists
+        run: |
+          if [ ! -d "animations" ]; then
+            echo "Animations folder not found"
+            exit 1
+          fi
 
-    - name: Upload CSV file
-      uses: actions/upload-artifact@v2
-      with:
-        name: csv-file
-        path: results.csv
+      - name: Compress animations folder
+        run: |
+          zip -r animations.zip animations
 
-    - name: Send output and CSV to Discord
-      run: |
-        webhook_url="https://discord.com/api/webhooks/1250567268442702005/B5ZrWNteOesdLziXEbWM9POWgBvGqa2N8bS_RJYuqhR6sWqcXUNRFKq--ffjFdnKO944"
-        tag_name=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
-        curl -X POST "$webhook_url" \
-          -F "payload_json={\"embeds\":[{\"title\":\"Rapport complet du tag $tag_name\",\"description\":\"Voici le rapport complet pour le tag $tag_name\"}]}" \
-          -F "file1=@output.txt" \
-          -F "file2=@results.csv"
+      - name: Upload output file
+        uses: actions/upload-artifact@v2
+        with:
+          name: output-file
+          path: output.txt
+
+      - name: Upload CSV file
+        uses: actions/upload-artifact@v2
+        with:
+          name: csv-file
+          path: results.csv
+
+      - name: Upload animations file
+        uses: actions/upload-artifact@v2
+        with:
+          name: animations-file
+          path: animations.zip
+
+      - name: Send output, CSV and animations to Discord
+        run: |
+          webhook_url="https://discord.com/api/webhooks/1250567268442702005/B5ZrWNteOesdLziXEbWM9POWgBvGqa2N8bS_RJYuqhR6sWqcXUNRFKq--ffjFdnKO944"
+          tag_name=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
+          curl -X POST "$webhook_url" \
+            -F "payload_json={\"embeds\":[{\"title\":\"Rapport complet du tag $tag_name\",\"description\":\"Voici le rapport complet pour le tag $tag_name\"}]}" \
+            -F "file1=@output.txt" \
+            -F "file2=@results.csv" \
+            -F "file3=@animations.zip"
