@@ -3,3 +3,4 @@ networkx
 colorama
 matplotlib
 community
+plotly
