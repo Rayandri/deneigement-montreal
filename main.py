@@ -367,10 +367,12 @@ def main():
         print(
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
 
-        visualizer = GraphVisualizerPlotly(graph_quartier)
-        visualizer.visualize_results(
-            drone_path_quartier, circuits)
-        break
+        #pour afficher le graph sur l'ordi de rayan mais pas sur les runnner github
+        if "tp/ero1/" in os.getcwd():
+            visualizer = GraphVisualizerPlotly(graph_quartier)
+            visualizer.visualize_results(
+                drone_path_quartier, circuits)
+            break
 
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
