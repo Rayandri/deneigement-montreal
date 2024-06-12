@@ -375,7 +375,7 @@ def main():
             Fore.GREEN + f"Temps de déneigement avec véhicules type II : {result['time_type_II']:.2f} heures" + Style.RESET_ALL)
         print(
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
-        break
+        
         # pour afficher le graph sur l'ordi de rayan mais pas sur les runnner github
         if "tp/ero1/toto" in os.getcwd():
             visualizer = GraphVisualizerPlotly(graph_quartier)
