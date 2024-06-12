@@ -164,3 +164,5 @@ pyconcorde/
 montreal.graphml
 *.graphml
 .idea/
+
+results.csv
