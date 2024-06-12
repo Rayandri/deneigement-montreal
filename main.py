@@ -336,10 +336,20 @@ def main():
             quartier_results["time_type_I"] = max_time_type_I
             quartier_results["time_type_II"] = max_time_type_II
 
+            
             # Modèle de coût (Problème 3)
             drone_cost = 100 + 0.01 * distance_quartier
-            vehicle_cost_type_I = 500 + 1.1 * postman_distance_quartier / num_vehicles
-            vehicle_cost_type_II = 800 + 1.3 * postman_distance_quartier / num_vehicles
+
+            # Calcul du coût horaire
+            cost_hour_type_I = (min(max_time_type_I, 8) * 1.1 + max(0, max_time_type_I - 8) * 1.3) * num_vehicles
+            cost_hour_type_II = (min(max_time_type_II, 8) * 1.3 + max(0, max_time_type_II - 8) * 1.5) * num_vehicles
+
+            # Coût des opérations de déneigement avec véhicules type I
+            vehicle_cost_type_I = 500 + 1.1 * postman_distance_quartier + cost_hour_type_I
+
+            # Coût des opérations de déneigement avec véhicules type II
+            vehicle_cost_type_II = 800 + 1.3 * postman_distance_quartier + cost_hour_type_II
+
 
             quartier_results["drone_cost"] = drone_cost
             quartier_results["vehicle_cost_type_I"] = vehicle_cost_type_I
