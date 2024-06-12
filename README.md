@@ -28,41 +28,41 @@ Pour installer toutes les dépendances nécessaires et configurer l'environnemen
 ### Étapes d'Installation
 
 1. **Clonez le dépôt** :
-    \`\`\`bash
+    ```bash
     git clone https://github.com/Rayandri/deneigement-montreal.git
     cd deneigement-montreal
-    \`\`\`
+    ```
 
 2. **Créez et activez un environnement virtuel, et installez les dépendances** :
-    \`\`\`bash
+    ```bash
     ./install.sh
-    \`\`\`
+    ```
 
     ou bien manuellement :
 
    Pour créer un environnement virtuel :
-   \`\`\`bash
+   ```bash
       python3 -m venv env
       source env/bin/activate
-   \`\`\`
+   ```
 
    Puis installez les dépendances :
-    \`\`\`bash
+    ```bash
     pip install -r requirements.txt
-    \`\`\`
+    ```
 
 ## Utilisation
-Le script principal se trouve dans \`main.py\`. Pour exécuter le script, utilisez la commande suivante :
+Le script principal se trouve dans `main.py`. Pour exécuter le script, utilisez la commande suivante :
 
-\`\`\`bash
+```bash
 source env/bin/activate
 python main.py
-\`\`\`
+```
 
 ## Structure du Code
-- \`GraphManager\`: Gère le téléchargement, le chargement, l'eulérisation et l'optimisation des trajets dans un graphe urbain.
-- \`GraphVisualizerPlotly\`: Gère la visualisation et l'animation des graphes avec un fond de carte OpenStreetMap.
-- \`optimize_drone_path\`: Optimise le trajet du drone en utilisant une version modifiée du problème du postier chinois.
+- `GraphManager`: Gère le téléchargement, le chargement, l'eulérisation et l'optimisation des trajets dans un graphe urbain.
+- `GraphVisualizerPlotly`: Gère la visualisation et l'animation des graphes avec un fond de carte OpenStreetMap.
+- `optimize_drone_path`: Optimise le trajet du drone en utilisant une version modifiée du problème du postier chinois.
 
 ## Fonctionnalités
 - **Téléchargement et Chargement de Graphes** : Télécharge les graphes urbains depuis OpenStreetMap et les charge pour utilisation.
