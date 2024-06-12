@@ -202,6 +202,9 @@ class GraphManager:
     def eulerize_graph(self, graph):
         """
         Rendre le graphe eulérien en ajoutant des arêtes.
+        
+        je crée des routes entre les noeuds de degré impair pour les rendre pair
+        sauf que sur lors du parcours je prend le chemin le plus court qui mene de u à v avec des vrai routes existante 
 
         :param graph: Le graphe à eulériser.
         :return: Le graphe eulérisé.
