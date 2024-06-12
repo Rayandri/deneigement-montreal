@@ -12,7 +12,7 @@ import community as community_louvain
 
 VEHICLE_SPEED_TYPE_I = 10  # km/h
 VEHICLE_SPEED_TYPE_II = 20  # km/h
-num_vehicles = 1  # Nombre de véhicules disponibles
+num_vehicles = 4  # Nombre de véhicules disponibles
 
 
 # Initialiser colorama
@@ -375,7 +375,7 @@ def main():
             Fore.GREEN + f"Temps de déneigement avec véhicules type II : {result['time_type_II']:.2f} heures" + Style.RESET_ALL)
         print(
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
-
+        break
         # pour afficher le graph sur l'ordi de rayan mais pas sur les runnner github
         if "tp/ero1/toto" in os.getcwd():
             visualizer = GraphVisualizerPlotly(graph_quartier)
