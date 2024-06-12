@@ -8,7 +8,6 @@ on:
 jobs:
   run:
     runs-on: self-hosted
-    timeout-minutes: 120
 
     steps:
     - name: Checkout repository
