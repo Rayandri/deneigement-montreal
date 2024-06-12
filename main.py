@@ -13,8 +13,7 @@ import community as community_louvain
 
 VEHICLE_SPEED_TYPE_I = 10  # km/h
 VEHICLE_SPEED_TYPE_II = 20  # km/h
-MAX_TIME = 8  # heures
-num_vehicles = 4  # Nombre de véhicules disponibles
+num_vehicles = 1  # Nombre de véhicules disponibles
 
 
 # Initialiser colorama
