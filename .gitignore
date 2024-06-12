@@ -163,3 +163,4 @@ cache/
 pyconcorde/
 montreal.graphml
 *.graphml
+.idea/

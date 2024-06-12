@@ -5,6 +5,9 @@ import osmnx as ox
 import networkx as nx
 from colorama import Fore, Style, init
 
+import plotly.graph_objects as go
+
+
 # Initialiser colorama
 init()
 
@@ -24,6 +27,74 @@ def suppress_output():
         sys.stdout = original_stdout
         sys.stderr = original_stderr
 
+
+class GraphVisualizerPlotly:
+    def __init__(self, graph):
+        self.graph = graph
+        self.pos = {node: (data['x'], data['y']) for node, data in graph.nodes(data=True)}
+
+    def path_to_edges(self, path):
+        """Convertit un chemin de nœuds en une liste d'arêtes."""
+        return [(path[i], path[i + 1]) for i in range(len(path) - 1)]
+
+    def animate_graph(self, path, title):
+        """
+        Animer le graphe et le chemin optimisé.
+
+        :param path: Le chemin optimisé à animer.
+        :param title: Le titre de l'animation.
+        """
+        edges = self.path_to_edges(path)
+        
+        edge_x = []
+        edge_y = []
+        for edge in edges:
+            x0, y0 = self.pos[edge[0]]
+            x1, y1 = self.pos[edge[1]]
+            edge_x.append(x0)
+            edge_x.append(x1)
+            edge_x.append(None)
+            edge_y.append(y0)
+            edge_y.append(y1)
+            edge_y.append(None)
+        
+        node_x = [self.pos[node][0] for node in self.graph.nodes()]
+        node_y = [self.pos[node][1] for node in self.graph.nodes()]
+        
+        frames = []
+        for i in range(len(edges)):
+            frame_x = edge_x[:(i+1)*3]
+            frame_y = edge_y[:(i+1)*3]
+            frames.append(go.Frame(data=[go.Scattermapbox(lat=frame_y, lon=frame_x, mode='lines', line=dict(color='red'))]))
+        
+        fig = go.Figure(
+            data=[go.Scattermapbox(lat=edge_y, lon=edge_x, mode='lines', line=dict(color='black')),
+                  go.Scattermapbox(lat=node_y, lon=node_x, mode='markers')],
+            layout=go.Layout(
+                title=title,
+                mapbox_style="open-street-map",
+                mapbox=dict(
+                    center=dict(lat=sum(node_y)/len(node_y), lon=sum(node_x)/len(node_x)),
+                    zoom=12,
+                ),
+                updatemenus=[dict(type='buttons', showactive=False,
+                                  buttons=[dict(label='Play',
+                                                method='animate',
+                                                args=[None, dict(frame=dict(duration=500, redraw=True), fromcurrent=True)])])]),
+            frames=frames
+        )
+        fig.show()
+
+    def visualize_results(self, drone_path, postman_path):
+        """
+        Visualiser les résultats pour le chemin du drone et du postier chinois.
+
+        :param drone_path: Le chemin optimisé pour le drone.
+        :param postman_path: Le chemin optimisé pour le postier chinois.
+        """
+        self.animate_graph(drone_path, "Chemin optimisé pour le drone")
+        self.animate_graph(postman_path, "Chemin optimisé pour le postier chinois")
+        
 
 class GraphManager:
     """Classe pour gérer le téléchargement, le chargement, l'eulérisation et l'optimisation des trajets dans un graphe urbain."""
@@ -129,15 +200,16 @@ class GraphManager:
         :return: Le circuit optimal et sa longueur.
         """
         eulerized_graph = self.eulerize_graph(graph)
-        eulerian_circuit = list(nx.eulerian_circuit(eulerized_graph, source=list(eulerized_graph.nodes())[0]))
+        eulerian_circuit = list(nx.eulerian_circuit(
+            eulerized_graph, source=list(eulerized_graph.nodes())[0]))
         circuit = []
         total_distance = 0
         for u, v in eulerian_circuit:
             circuit.append(u)
-            total_distance += eulerized_graph[u][v].get('length', 1)  # Default length of 1 if not found
+            # Default length of 1 if not found
+            total_distance += eulerized_graph[u][v].get('length', 1)
         circuit.append(circuit[0])  # Retourner au point de départ
         return circuit, total_distance
-
 
 
 def optimize_drone_path(graph):
@@ -149,24 +221,26 @@ def optimize_drone_path(graph):
     """
     undirected_graph = graph.to_undirected()
     eulerized_graph = nx.eulerize(undirected_graph)
-    
+
     # Vérifier et assigner l'attribut 'length' pour toutes les arêtes
     for u, v, data in eulerized_graph.edges(data=True):
         if 'length' not in data:
             try:
-                data['length'] = nx.shortest_path_length(graph, u, v, weight='length')
+                data['length'] = nx.shortest_path_length(
+                    graph, u, v, weight='length')
             except nx.NetworkXNoPath:
                 data['length'] = 1  # Assign default length if no path is found
-    
-    eulerian_circuit = list(nx.eulerian_circuit(eulerized_graph, source=list(eulerized_graph.nodes())[0]))
+
+    eulerian_circuit = list(nx.eulerian_circuit(
+        eulerized_graph, source=list(eulerized_graph.nodes())[0]))
     drone_path = []
     total_distance = 0
     for u, v in eulerian_circuit:
         drone_path.append(u)
-        total_distance += eulerized_graph[u][v].get('length', 1)  # Default length of 1 if not found
+        # Default length of 1 if not found
+        total_distance += eulerized_graph[u][v].get('length', 1)
     drone_path.append(drone_path[0])  # Retourner au point de départ
     return drone_path, total_distance
-
 
 
 def main():
@@ -226,6 +300,11 @@ def main():
             Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
         print(
             Fore.RED + f"Coût des opérations de déneigement avec véhicules type II : {result['vehicle_cost_type_II']:.2f} €" + Style.RESET_ALL)
+
+        visualizer = GraphVisualizerPlotly(graph_quartier)
+        visualizer.visualize_results(
+            drone_path_quartier, postman_path_quartier)
+        break
 
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
