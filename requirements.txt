@@ -2,3 +2,4 @@ osmnx
 networkx
 colorama
 matplotlib
+community

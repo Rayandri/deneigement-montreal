@@ -7,6 +7,15 @@ from colorama import Fore, Style, init
 
 import plotly.graph_objects as go
 
+import community as community_louvain
+
+
+
+VEHICLE_SPEED_TYPE_I = 10  # km/h
+VEHICLE_SPEED_TYPE_II = 20  # km/h
+MAX_TIME = 8  # heures
+num_vehicles = 3  # Nombre de véhicules disponibles
+
 
 # Initialiser colorama
 init()
@@ -31,70 +40,98 @@ def suppress_output():
 class GraphVisualizerPlotly:
     def __init__(self, graph):
         self.graph = graph
-        self.pos = {node: (data['x'], data['y']) for node, data in graph.nodes(data=True)}
+        self.pos = {node: (data['x'], data['y'])
+                    for node, data in graph.nodes(data=True)}
 
     def path_to_edges(self, path):
         """Convertit un chemin de nœuds en une liste d'arêtes."""
         return [(path[i], path[i + 1]) for i in range(len(path) - 1)]
-
-    def animate_graph(self, path, title):
+    
+    
+    def animate_graph(self, paths, title):
         """
-        Animer le graphe et le chemin optimisé.
+        Animer le graphe et les chemins optimisés.
 
-        :param path: Le chemin optimisé à animer.
+        :param paths: Les chemins optimisés à animer (liste de listes d'arêtes).
         :param title: Le titre de l'animation.
         """
-        edges = self.path_to_edges(path)
-        
-        edge_x = []
-        edge_y = []
-        for edge in edges:
-            x0, y0 = self.pos[edge[0]]
-            x1, y1 = self.pos[edge[1]]
-            edge_x.append(x0)
-            edge_x.append(x1)
-            edge_x.append(None)
-            edge_y.append(y0)
-            edge_y.append(y1)
-            edge_y.append(None)
-        
+        colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown']
+
+        fig = go.Figure()
+
+        for path_index, path in enumerate(paths):
+            edge_x = []
+            edge_y = []
+            color = colors[path_index % len(colors)]
+            for edge in path:
+                x0, y0 = self.pos[edge[0]]
+                x1, y1 = self.pos[edge[1]]
+                edge_x.extend([x0, x1, None])
+                edge_y.extend([y0, y1, None])
+
+            fig.add_trace(go.Scattermapbox(
+                lat=edge_y,
+                lon=edge_x,
+                mode='lines',
+                line=dict(color=color),
+                name=f"Déneigeuse {path_index + 1}"
+            ))
+
         node_x = [self.pos[node][0] for node in self.graph.nodes()]
         node_y = [self.pos[node][1] for node in self.graph.nodes()]
-        
-        frames = []
-        for i in range(len(edges)):
-            frame_x = edge_x[:(i+1)*3]
-            frame_y = edge_y[:(i+1)*3]
-            frames.append(go.Frame(data=[go.Scattermapbox(lat=frame_y, lon=frame_x, mode='lines', line=dict(color='red'))]))
-        
-        fig = go.Figure(
-            data=[go.Scattermapbox(lat=edge_y, lon=edge_x, mode='lines', line=dict(color='black')),
-                  go.Scattermapbox(lat=node_y, lon=node_x, mode='markers')],
-            layout=go.Layout(
-                title=title,
-                mapbox_style="open-street-map",
-                mapbox=dict(
-                    center=dict(lat=sum(node_y)/len(node_y), lon=sum(node_x)/len(node_x)),
-                    zoom=12,
-                ),
-                updatemenus=[dict(type='buttons', showactive=False,
-                                  buttons=[dict(label='Play',
-                                                method='animate',
-                                                args=[None, dict(frame=dict(duration=500, redraw=True), fromcurrent=True)])])]),
-            frames=frames
+
+        fig.add_trace(go.Scattermapbox(
+            lat=node_y,
+            lon=node_x,
+            mode='markers',
+            marker=dict(size=5),
+            name='Noeuds'
+        ))
+
+        fig.update_layout(
+            title=title,
+            mapbox_style="open-street-map",
+            mapbox=dict(
+                center=dict(lat=sum(node_y)/len(node_y), lon=sum(node_x)/len(node_x)),
+                zoom=12,
+            ),
+            updatemenus=[dict(type='buttons', showactive=False,
+                            buttons=[dict(label='Play',
+                                            method='animate',
+                                            args=[None, dict(frame=dict(duration=500, redraw=True), fromcurrent=True)])])],
+            showlegend=True
         )
+
+        frames = []
+        for i in range(max(len(path) for path in paths)):
+            frame_data = []
+            for path_index, path in enumerate(paths):
+                frame_x = []
+                frame_y = []
+                color = colors[path_index % len(colors)]
+                for edge in path[:i+1]:
+                    x0, y0 = self.pos[edge[0]]
+                    x1, y1 = self.pos[edge[1]]
+                    frame_x.extend([x0, x1, None])
+                    frame_y.extend([y0, y1, None])
+                frame_data.append(go.Scattermapbox(
+                    lat=frame_y, lon=frame_x, mode='lines', line=dict(color=color)))
+            frames.append(go.Frame(data=frame_data))
+
+        fig.frames = frames
         fig.show()
 
-    def visualize_results(self, drone_path, postman_path):
+
+    def visualize_results(self, drone_path, circuits):
         """
-        Visualiser les résultats pour le chemin du drone et du postier chinois.
+        Visualiser les résultats pour le chemin du drone et les chemins des déneigeuses.
 
         :param drone_path: Le chemin optimisé pour le drone.
-        :param postman_path: Le chemin optimisé pour le postier chinois.
+        :param circuits: Les chemins optimisés pour les déneigeuses.
         """
-        self.animate_graph(drone_path, "Chemin optimisé pour le drone")
-        self.animate_graph(postman_path, "Chemin optimisé pour le postier chinois")
-        
+        self.animate_graph(circuits, "Chemin optimisé pour les déneigeuses")
+
+
 
 class GraphManager:
     """Classe pour gérer le téléchargement, le chargement, l'eulérisation et l'optimisation des trajets dans un graphe urbain."""
@@ -191,25 +228,46 @@ class GraphManager:
                     # Assign default length if no path is found
                     data['length'] = 1
         return undirected_graph
-
-    def solve_chinese_postman(self, graph):
+    
+    
+    def solve_chinese_postman(self, graph, num_vehicles):
         """
         Résoudre le problème du postier chinois pour optimiser les trajets des véhicules de déneigement.
 
         :param graph: Le graphe pour lequel résoudre le problème.
-        :return: Le circuit optimal et sa longueur.
+        :param num_vehicles: Le nombre de véhicules disponibles.
+        :return: Le circuit optimal pour chaque véhicule, la longueur totale et le temps de déneigement.
         """
         eulerized_graph = self.eulerize_graph(graph)
         eulerian_circuit = list(nx.eulerian_circuit(
             eulerized_graph, source=list(eulerized_graph.nodes())[0]))
-        circuit = []
-        total_distance = 0
+
+        total_distance = sum(eulerized_graph[u][v].get('length', 1) for u, v in eulerian_circuit)
+        segment_length = total_distance / num_vehicles
+
+        circuits = [[] for _ in range(num_vehicles)]
+        vehicle_distances = [0] * num_vehicles
+        current_vehicle = 0
+        current_distance = 0
+
         for u, v in eulerian_circuit:
-            circuit.append(u)
-            # Default length of 1 if not found
-            total_distance += eulerized_graph[u][v].get('length', 1)
-        circuit.append(circuit[0])  # Retourner au point de départ
-        return circuit, total_distance
+            length = eulerized_graph[u][v].get('length', 1)
+            if current_distance + length > segment_length and current_vehicle < num_vehicles - 1:
+                current_vehicle += 1
+                current_distance = 0
+            circuits[current_vehicle].append((u, v))
+            vehicle_distances[current_vehicle] += length
+            current_distance += length
+
+        # Calculer le temps de déneigement pour chaque véhicule
+        times_type_I = [distance / VEHICLE_SPEED_TYPE_I for distance in vehicle_distances]
+        times_type_II = [distance / VEHICLE_SPEED_TYPE_II for distance in vehicle_distances]
+
+        max_time_type_I = max(times_type_I)
+        max_time_type_II = max(times_type_II)
+
+        return circuits, total_distance, max_time_type_I, max_time_type_II
+
 
 
 def optimize_drone_path(graph):
@@ -242,7 +300,6 @@ def optimize_drone_path(graph):
     drone_path.append(drone_path[0])  # Retourner au point de départ
     return drone_path, total_distance
 
-
 def main():
     city_name = 'Montreal, Quebec, Canada'
     file_path = 'montreal.graphml'
@@ -272,19 +329,22 @@ def main():
             snow_removal_nodes_quartier = drone_path_quartier
 
             # Résoudre le problème du postier chinois (Problème 2)
-            postman_path_quartier, postman_distance_quartier = manager.solve_chinese_postman(
-                graph_quartier)
-            quartier_results["postman_path"] = postman_path_quartier
+            circuits, postman_distance_quartier, max_time_type_I, max_time_type_II = manager.solve_chinese_postman(
+                graph_quartier, num_vehicles)
+            quartier_results["postman_path"] = circuits
             quartier_results["postman_distance"] = postman_distance_quartier
+            quartier_results["time_type_I"] = max_time_type_I
+            quartier_results["time_type_II"] = max_time_type_II
 
             # Modèle de coût (Problème 3)
             drone_cost = 100 + 0.01 * distance_quartier
-            vehicle_cost_type_I = 500 + 1.1 * postman_distance_quartier
-            vehicle_cost_type_II = 800 + 1.3 * postman_distance_quartier
+            vehicle_cost_type_I = 500 + 1.1 * postman_distance_quartier / num_vehicles
+            vehicle_cost_type_II = 800 + 1.3 * postman_distance_quartier / num_vehicles
 
             quartier_results["drone_cost"] = drone_cost
             quartier_results["vehicle_cost_type_I"] = vehicle_cost_type_I
             quartier_results["vehicle_cost_type_II"] = vehicle_cost_type_II
+            quartier_results["num_vehicles"] = num_vehicles
 
         results.append(quartier_results)
         result = quartier_results
@@ -300,10 +360,16 @@ def main():
             Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
         print(
             Fore.RED + f"Coût des opérations de déneigement avec véhicules type II : {result['vehicle_cost_type_II']:.2f} €" + Style.RESET_ALL)
+        print(
+            Fore.GREEN + f"Temps de déneigement avec véhicules type I : {result['time_type_I']:.2f} heures" + Style.RESET_ALL)
+        print(
+            Fore.GREEN + f"Temps de déneigement avec véhicules type II : {result['time_type_II']:.2f} heures" + Style.RESET_ALL)
+        print(
+            Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
 
         visualizer = GraphVisualizerPlotly(graph_quartier)
         visualizer.visualize_results(
-            drone_path_quartier, postman_path_quartier)
+            drone_path_quartier, circuits)
         break
 
     # Afficher le résumé final
@@ -321,8 +387,15 @@ def main():
             Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
         print(
             Fore.RED + f"Coût des opérations de déneigement avec véhicules type II : {result['vehicle_cost_type_II']:.2f} €" + Style.RESET_ALL)
+        print(
+            Fore.GREEN + f"Temps de déneigement avec véhicules type I : {result['time_type_I']:.2f} heures" + Style.RESET_ALL)
+        print(
+            Fore.GREEN + f"Temps de déneigement avec véhicules type II : {result['time_type_II']:.2f} heures" + Style.RESET_ALL)
+        print(
+            Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
 
     print(Fore.CYAN + "\nOptimisation des trajets de déneigement terminée pour tous les quartiers." + Style.RESET_ALL)
+
 
 
 if __name__ == "__main__":
