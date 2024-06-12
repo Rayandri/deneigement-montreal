@@ -442,7 +442,7 @@ def main():
     # Appel de la fonction main pour chaque nombre de véhicules et écriture dans un fichier CSV
     all_results = []
 
-    for num_vehicles in range(1, 11):
+    for num_vehicles in range(1, 10):
         print("\n\n\n\n--------------------------------------------------------")
         print(f"Résultats pour {num_vehicles} déneigeuses :")
         results = run(num_vehicles)
@@ -454,7 +454,8 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
         writer.writeheader()
         for result in all_results:
-            writer.writerow(result)
+            filtered_result = {key: result[key] for key in fieldnames}
+            writer.writerow(filtered_result)
 
 
 if __name__ == "__main__":
