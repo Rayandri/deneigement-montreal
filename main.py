@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 import community as community_louvain
 
 
-
 VEHICLE_SPEED_TYPE_I = 10  # km/h
 VEHICLE_SPEED_TYPE_II = 20  # km/h
 num_vehicles = 3  # Nombre de véhicules disponibles
@@ -45,8 +44,7 @@ class GraphVisualizerPlotly:
     def path_to_edges(self, path):
         """Convertit un chemin de nœuds en une liste d'arêtes."""
         return [(path[i], path[i + 1]) for i in range(len(path) - 1)]
-    
-    
+
     def animate_graph(self, paths, title):
         """
         Animer le graphe et les chemins optimisés.
@@ -91,11 +89,12 @@ class GraphVisualizerPlotly:
             title=title,
             mapbox_style="open-street-map",
             mapbox=dict(
-                center=dict(lat=sum(node_y)/len(node_y), lon=sum(node_x)/len(node_x)),
+                center=dict(lat=sum(node_y)/len(node_y),
+                            lon=sum(node_x)/len(node_x)),
                 zoom=12,
             ),
             updatemenus=[dict(type='buttons', showactive=False,
-                            buttons=[dict(label='Play',
+                              buttons=[dict(label='Play',
                                             method='animate',
                                             args=[None, dict(frame=dict(duration=500, redraw=True), fromcurrent=True)])])],
             showlegend=True
@@ -120,7 +119,6 @@ class GraphVisualizerPlotly:
         fig.frames = frames
         fig.show()
 
-
     def visualize_results(self, drone_path, circuits):
         """
         Visualiser les résultats pour le chemin du drone et les chemins des déneigeuses.
@@ -129,7 +127,6 @@ class GraphVisualizerPlotly:
         :param circuits: Les chemins optimisés pour les déneigeuses.
         """
         self.animate_graph(circuits, "Chemin optimisé pour les déneigeuses")
-
 
 
 class GraphManager:
@@ -200,7 +197,7 @@ class GraphManager:
 
         :return: Informations sur le graphe.
         """
-        return nx.info(self.quartier[i])
+        return nx.info(self.quartier[i])    
 
     def eulerize_graph(self, graph):
         """
@@ -227,8 +224,7 @@ class GraphManager:
                     # Assign default length if no path is found
                     data['length'] = 1
         return undirected_graph
-    
-    
+
     def solve_chinese_postman(self, graph, num_vehicles):
         """
         Résoudre le problème du postier chinois pour optimiser les trajets des véhicules de déneigement.
@@ -241,7 +237,8 @@ class GraphManager:
         eulerian_circuit = list(nx.eulerian_circuit(
             eulerized_graph, source=list(eulerized_graph.nodes())[0]))
 
-        total_distance = sum(eulerized_graph[u][v].get('length', 1) for u, v in eulerian_circuit)
+        total_distance = sum(eulerized_graph[u][v].get(
+            'length', 1) for u, v in eulerian_circuit)
         segment_length = total_distance / num_vehicles
 
         circuits = [[] for _ in range(num_vehicles)]
@@ -259,14 +256,15 @@ class GraphManager:
             current_distance += length
 
         # Calculer le temps de déneigement pour chaque véhicule
-        times_type_I = [distance / VEHICLE_SPEED_TYPE_I for distance in vehicle_distances]
-        times_type_II = [distance / VEHICLE_SPEED_TYPE_II for distance in vehicle_distances]
+        times_type_I = [distance /
+                        VEHICLE_SPEED_TYPE_I for distance in vehicle_distances]
+        times_type_II = [
+            distance / VEHICLE_SPEED_TYPE_II for distance in vehicle_distances]
 
         max_time_type_I = max(times_type_I)
         max_time_type_II = max(times_type_II)
 
         return circuits, total_distance, max_time_type_I, max_time_type_II
-
 
 
 def optimize_drone_path(graph):
@@ -299,6 +297,7 @@ def optimize_drone_path(graph):
     drone_path.append(drone_path[0])  # Retourner au point de départ
     return drone_path, total_distance
 
+
 def main():
     city_name = 'Montreal, Quebec, Canada'
     file_path = 'montreal.graphml'
@@ -310,6 +309,7 @@ def main():
                  "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada", "Le Plateau-Mont-Royal, Montreal, Canada"]
 
     results = []
+    cpt = 0
 
     for i, quartier in enumerate(quartiers):
         quartier_results = {"quartier": quartier}
@@ -335,20 +335,20 @@ def main():
             quartier_results["time_type_I"] = max_time_type_I
             quartier_results["time_type_II"] = max_time_type_II
 
-            
             # Modèle de coût (Problème 3)
             drone_cost = 100 + 0.01 * distance_quartier
 
             # Calcul du coût horaire
-            cost_hour_type_I = (min(max_time_type_I, 8) * 1.1 + max(0, max_time_type_I - 8) * 1.3) * num_vehicles
-            cost_hour_type_II = (min(max_time_type_II, 8) * 1.3 + max(0, max_time_type_II - 8) * 1.5) * num_vehicles
+            cost_hour_type_I = (min(max_time_type_I, 8) * 1.1 +
+                                max(0, max_time_type_I - 8) * 1.3) * num_vehicles
+            cost_hour_type_II = (min(max_time_type_II, 8) * 1.3 +
+                                 max(0, max_time_type_II - 8) * 1.5) * num_vehicles
 
             # Coût des opérations de déneigement avec véhicules type I
             vehicle_cost_type_I = 500 + 1.1 * postman_distance_quartier + cost_hour_type_I
 
             # Coût des opérations de déneigement avec véhicules type II
             vehicle_cost_type_II = 800 + 1.3 * postman_distance_quartier + cost_hour_type_II
-
 
             quartier_results["drone_cost"] = drone_cost
             quartier_results["vehicle_cost_type_I"] = vehicle_cost_type_I
@@ -376,16 +376,28 @@ def main():
         print(
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
 
-        #pour afficher le graph sur l'ordi de rayan mais pas sur les runnner github
-        if "tp/ero1/" in os.getcwd():
+        # pour afficher le graph sur l'ordi de rayan mais pas sur les runnner github
+        if "tp/ero1/toto" in os.getcwd():
             visualizer = GraphVisualizerPlotly(graph_quartier)
             visualizer.visualize_results(
                 drone_path_quartier, circuits)
-            break
+            cpt += 1
+            if cpt == 2:
+                break
+    
+        
 
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
+    total_drone_cost = 0
+    total_vehicle_cost_type_I = 0
+    total_vehicle_cost_type_II = 0
+
     for result in results:
+        total_drone_cost += result["drone_cost"]
+        total_vehicle_cost_type_I += result["vehicle_cost_type_I"]
+        total_vehicle_cost_type_II += result["vehicle_cost_type_II"]
+
         print(Fore.YELLOW +
               f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
         print(Fore.MAGENTA +
@@ -405,8 +417,13 @@ def main():
         print(
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
 
-    print(Fore.CYAN + "\nOptimisation des trajets de déneigement terminée pour tous les quartiers." + Style.RESET_ALL)
-
+    print(Fore.CYAN + "\n\n-----------------------------------------\n\nCoût total des opérations de déneigement :" + Style.RESET_ALL)
+    print(Fore.BLUE +
+          f"Coût total du vol du drone : {total_drone_cost:.2f} €" + Style.RESET_ALL)
+    print(Fore.RED +
+          f"Coût total des opérations de déneigement avec véhicules type I : {total_vehicle_cost_type_I:.2f} €" + Style.RESET_ALL)
+    print(Fore.RED +
+          f"Coût total des opérations de déneigement avec véhicules type II : {total_vehicle_cost_type_II:.2f} €" + Style.RESET_ALL)
 
 
 if __name__ == "__main__":
