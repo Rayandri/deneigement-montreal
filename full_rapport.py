@@ -45,12 +45,13 @@ class GraphVisualizerPlotly:
         """Convertit un chemin de nœuds en une liste d'arêtes."""
         return [(path[i], path[i + 1]) for i in range(len(path) - 1)]
 
-    def animate_graph(self, paths, title):
+    def animate_graph(self, paths, title, file_name=None):
         """
         Animer le graphe et les chemins optimisés.
 
         :param paths: Les chemins optimisés à animer (liste de listes d'arêtes).
         :param title: Le titre de l'animation.
+        :param file_name: Nom du fichier pour sauvegarder l'animation (si fourni).
         """
         colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown']
 
@@ -117,16 +118,24 @@ class GraphVisualizerPlotly:
             frames.append(go.Frame(data=frame_data))
 
         fig.frames = frames
-        fig.show()
 
-    def visualize_results(self, drone_path, circuits):
+        if file_name:
+            if not os.path.exists("animations"):
+                os.makedirs("animations")
+            fig.write_html(f"animations/{file_name}")
+
+        # fig.show()
+
+    def visualize_results(self, drone_path, circuits, base_file_name):
         """
         Visualiser les résultats pour le chemin du drone et les chemins des déneigeuses.
 
         :param drone_path: Le chemin optimisé pour le drone.
         :param circuits: Les chemins optimisés pour les déneigeuses.
+        :param base_file_name: Base du nom de fichier pour sauvegarder les animations.
         """
-        self.animate_graph(circuits, "Chemin optimisé pour les déneigeuses")
+        self.animate_graph(circuits, "Chemin optimisé pour les déneigeuses",
+                           file_name=f"{base_file_name}_deneigeuses.html")
 
 
 class GraphManager:
@@ -197,7 +206,7 @@ class GraphManager:
 
         :return: Informations sur le graphe.
         """
-        return nx.info(self.quartier[i])    
+        return nx.info(self.quartier[i])
 
     def eulerize_graph(self, graph):
         """
@@ -298,35 +307,44 @@ def optimize_drone_path(graph):
     return drone_path, total_distance
 
 
-
-
-
 def run(num_vehicles):
-    results = []
-
+    
     city_name = 'Montreal, Quebec, Canada'
     file_path = 'montreal.graphml'
 
     # Charger le graphe de la ville
     manager = GraphManager(city_name, file_path)
 
-    quartiers = ["Outremont, Montreal, Canada", "Verdun, Montreal, Canada", "Anjou, Montreal, Canada",
-                 "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada", "Le Plateau-Mont-Royal, Montreal, Canada"]
+    quartiers = ["Outremont, Montreal, Canada",
+                 "Verdun, Montreal, Canada",
+                 "Le Plateau-Mont-Royal, Montreal, Canada",
+                 "Anjou, Montreal, Canada"
+                 ]
+                 #"Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada",
+
+    results = []
+    cpt = 0
 
     for i, quartier in enumerate(quartiers):
-        quartier_results = {"quartier": quartier, "num_vehicles": num_vehicles}
+        quartier_results = {"quartier": quartier}
 
         # Charger le graphe du quartier
         graph_quartier = manager.get_graph_district(i, quartiers)
 
         with suppress_output():
             # Optimiser le trajet du drone (Problème 1)
-            drone_path_quartier, distance_quartier = optimize_drone_path(graph_quartier)
+            drone_path_quartier, distance_quartier = optimize_drone_path(
+                graph_quartier)
+            quartier_results["drone_path"] = drone_path_quartier
             quartier_results["drone_distance"] = distance_quartier
+
+            # Identifier les zones nécessitant un déneigement
+            snow_removal_nodes_quartier = drone_path_quartier
 
             # Résoudre le problème du postier chinois (Problème 2)
             circuits, postman_distance_quartier, max_time_type_I, max_time_type_II = manager.solve_chinese_postman(
                 graph_quartier, num_vehicles)
+            quartier_results["postman_path"] = circuits
             quartier_results["postman_distance"] = postman_distance_quartier
             quartier_results["time_type_I"] = max_time_type_I
             quartier_results["time_type_II"] = max_time_type_II
@@ -349,9 +367,8 @@ def run(num_vehicles):
             quartier_results["drone_cost"] = drone_cost
             quartier_results["vehicle_cost_type_I"] = vehicle_cost_type_I
             quartier_results["vehicle_cost_type_II"] = vehicle_cost_type_II
+            quartier_results["num_vehicles"] = num_vehicles
 
-        results.append(quartier_results)
-        
         results.append(quartier_results)
         result = quartier_results
         print(Fore.YELLOW +
@@ -372,35 +389,56 @@ def run(num_vehicles):
             Fore.GREEN + f"Temps de déneigement avec véhicules type II : {result['time_type_II']:.2f} heures" + Style.RESET_ALL)
         print(
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
-        
-    
+
+        visualizer = GraphVisualizerPlotly(graph_quartier)
+        visualizer.visualize_results(
+            drone_path_quartier, circuits, f"{quartier.replace(', Montreal, Canada', '').replace(' ', '_')}_{num_vehicles}_vehicules")
 
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
+    total_drone_cost = 0
+    total_vehicle_cost_type_I = 0
+    total_vehicle_cost_type_II = 0
+
     for result in results:
+        total_drone_cost += result["drone_cost"]
+        total_vehicle_cost_type_I += result["vehicle_cost_type_I"]
+        total_vehicle_cost_type_II += result["vehicle_cost_type_II"]
+
         print(Fore.YELLOW +
-              f"\nQuartier : {result['quartier']}, Nombre de déneigeuses : {result['num_vehicles']}" + Style.RESET_ALL)
+              f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
         print(Fore.MAGENTA +
               f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
         print(Fore.MAGENTA +
               f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
-        print(Fore.BLUE +
-              f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
-        print(Fore.RED +
-              f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
-        print(Fore.RED +
-              f"Coût des opérations de déneigement avec véhicules type II : {result['vehicle_cost_type_II']:.2f} €" + Style.RESET_ALL)
-        print(Fore.GREEN +
-              f"Temps de déneigement avec véhicules type I : {result['time_type_I']:.2f} heures" + Style.RESET_ALL)
-        print(Fore.GREEN +
-              f"Temps de déneigement avec véhicules type II : {result['time_type_II']:.2f} heures" + Style.RESET_ALL)
+        print(
+            Fore.BLUE + f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
+        print(
+            Fore.RED + f"Coût des opérations de déneigement avec véhicules type I : {result['vehicle_cost_type_I']:.2f} €" + Style.RESET_ALL)
+        print(
+            Fore.RED + f"Coût des opérations de déneigement avec véhicules type II : {result['vehicle_cost_type_II']:.2f} €" + Style.RESET_ALL)
+        print(
+            Fore.GREEN + f"Temps de déneigement avec véhicules type I : {result['time_type_I']:.2f} heures" + Style.RESET_ALL)
+        print(
+            Fore.GREEN + f"Temps de déneigement avec véhicules type II : {result['time_type_II']:.2f} heures" + Style.RESET_ALL)
+        print(
+            Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
 
+    print(Fore.CYAN + "\n\n-----------------------------------------\n\nCoût total des opérations de déneigement :" + Style.RESET_ALL)
+    print(Fore.BLUE +
+          f"Coût total du vol du drone : {total_drone_cost:.2f} €" + Style.RESET_ALL)
+    print(Fore.RED +
+          f"Coût total des opérations de déneigement avec véhicules type I : {total_vehicle_cost_type_I:.2f} €" + Style.RESET_ALL)
+    print(Fore.RED +
+          f"Coût total des opérations de déneigement avec véhicules type II : {total_vehicle_cost_type_II:.2f} €" + Style.RESET_ALL)
+
+
+    
     return results
 
 
-
 def main():
-    
+
     # Appel de la fonction main pour chaque nombre de véhicules et écriture dans un fichier CSV
     all_results = []
 
@@ -412,12 +450,11 @@ def main():
     # Écrire les résultats dans un fichier CSV
     with open('results.csv', 'w', newline='') as csvfile:
         fieldnames = ["quartier", "num_vehicles", "drone_distance", "postman_distance", "time_type_I", "time_type_II",
-                    "drone_cost", "vehicle_cost_type_I", "vehicle_cost_type_II"]
+                      "drone_cost", "vehicle_cost_type_I", "vehicle_cost_type_II"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
         writer.writeheader()
         for result in all_results:
             writer.writerow(result)
-
 
 
 if __name__ == "__main__":
