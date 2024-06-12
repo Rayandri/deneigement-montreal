@@ -95,7 +95,7 @@ class GraphVisualizerPlotly:
                 zoom=12,
             ),
             updatemenus=[dict(type='buttons', showactive=False,
-                            buttons=[dict(label='Play',
+                              buttons=[dict(label='Play',
                                             method='animate',
                                             args=[None, dict(frame=dict(duration=500, redraw=True), fromcurrent=True)])])],
             showlegend=True
@@ -123,8 +123,8 @@ class GraphVisualizerPlotly:
             if not os.path.exists("animations"):
                 os.makedirs("animations")
             fig.write_html(f"animations/{file_name}")
-            
-        #fig.show()
+
+        # fig.show()
 
     def visualize_results(self, drone_path, circuits, base_file_name):
         """
@@ -135,7 +135,7 @@ class GraphVisualizerPlotly:
         :param base_file_name: Base du nom de fichier pour sauvegarder les animations.
         """
         self.animate_graph(circuits, "Chemin optimisé pour les déneigeuses",
-                        file_name=f"{base_file_name}_deneigeuses.html")
+                           file_name=f"{base_file_name}_deneigeuses.html")
 
 
 class GraphManager:
@@ -182,7 +182,7 @@ class GraphManager:
         self.quartier = []
         if os.path.exists(self.file_path):
             print("Chargement du graphe " +
-                quartiers[i] + " depuis le fichier...")
+                  quartiers[i] + " depuis le fichier...")
             self.quartier = ox.load_graphml(quartiers[i] + ".graphml")
         else:
             print("Téléchargement du graphe " + quartiers[i] + "...")
@@ -317,8 +317,12 @@ def main():
     # Charger le graphe de la ville
     manager = GraphManager(city_name, file_path)
 
-    quartiers = ["Outremont, Montreal, Canada", "Verdun, Montreal, Canada", "Anjou, Montreal, Canada",
-                "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada", "Le Plateau-Mont-Royal, Montreal, Canada"]
+    quartiers = ["Outremont, Montreal, Canada",
+                 "Verdun, Montreal, Canada",
+                 "Le Plateau-Mont-Royal, Montreal, Canada",
+                 "Rivière-des-Prairies-Pointe-aux-Trembles, Montreal, Canada",
+                 "Anjou, Montreal, Canada"
+                 ]
 
     results = []
     cpt = 0
@@ -354,7 +358,7 @@ def main():
             cost_hour_type_I = (min(max_time_type_I, 8) * 1.1 +
                                 max(0, max_time_type_I - 8) * 1.3) * num_vehicles
             cost_hour_type_II = (min(max_time_type_II, 8) * 1.3 +
-                                max(0, max_time_type_II - 8) * 1.5) * num_vehicles
+                                 max(0, max_time_type_II - 8) * 1.5) * num_vehicles
 
             # Coût des opérations de déneigement avec véhicules type I
             vehicle_cost_type_I = 500 + 1.1 * postman_distance_quartier + cost_hour_type_I
@@ -370,11 +374,11 @@ def main():
         results.append(quartier_results)
         result = quartier_results
         print(Fore.YELLOW +
-            f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
+              f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
         print(Fore.MAGENTA +
-            f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
+              f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
         print(Fore.MAGENTA +
-            f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
+              f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
         print(
             Fore.BLUE + f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
         print(
@@ -389,9 +393,8 @@ def main():
             Fore.CYAN + f"Nombre de déneigeuses utilisées : {result['num_vehicles']}" + Style.RESET_ALL)
 
         visualizer = GraphVisualizerPlotly(graph_quartier)
-        visualizer.visualize_results(drone_path_quartier, circuits, f"{quartier.replace(', Montreal, Canada', '').replace(' ', '_')}_{num_vehicles}_vehicules")
-        break
-
+        visualizer.visualize_results(
+            drone_path_quartier, circuits, f"{quartier.replace(', Montreal, Canada', '').replace(' ', '_')}_{num_vehicles}_vehicules")
 
     # Afficher le résumé final
     print(Fore.CYAN + "\nRésumé des opérations de déneigement pour tous les quartiers :" + Style.RESET_ALL)
@@ -405,11 +408,11 @@ def main():
         total_vehicle_cost_type_II += result["vehicle_cost_type_II"]
 
         print(Fore.YELLOW +
-            f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
+              f"\nQuartier : {result['quartier']}" + Style.RESET_ALL)
         print(Fore.MAGENTA +
-            f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
+              f"Distance totale pour le chemin du drone : {result['drone_distance']:.2f} km" + Style.RESET_ALL)
         print(Fore.MAGENTA +
-            f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
+              f"Distance totale pour le chemin du postier chinois : {result['postman_distance']:.2f} km" + Style.RESET_ALL)
         print(
             Fore.BLUE + f"Coût du vol du drone : {result['drone_cost']:.2f} €" + Style.RESET_ALL)
         print(
@@ -425,11 +428,11 @@ def main():
 
     print(Fore.CYAN + "\n\n-----------------------------------------\n\nCoût total des opérations de déneigement :" + Style.RESET_ALL)
     print(Fore.BLUE +
-        f"Coût total du vol du drone : {total_drone_cost:.2f} €" + Style.RESET_ALL)
+          f"Coût total du vol du drone : {total_drone_cost:.2f} €" + Style.RESET_ALL)
     print(Fore.RED +
-        f"Coût total des opérations de déneigement avec véhicules type I : {total_vehicle_cost_type_I:.2f} €" + Style.RESET_ALL)
+          f"Coût total des opérations de déneigement avec véhicules type I : {total_vehicle_cost_type_I:.2f} €" + Style.RESET_ALL)
     print(Fore.RED +
-        f"Coût total des opérations de déneigement avec véhicules type II : {total_vehicle_cost_type_II:.2f} €" + Style.RESET_ALL)
+          f"Coût total des opérations de déneigement avec véhicules type II : {total_vehicle_cost_type_II:.2f} €" + Style.RESET_ALL)
 
 
 if __name__ == "__main__":
